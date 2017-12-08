@@ -66,3 +66,11 @@ class ModelWrapper():
             return self.cls * np.ones(len(X))
         else:
             return self.model.predict(X)
+
+    def predict_proba(self, X):
+        if self.cls is not None:
+            ret = np.zeros((len(X), 2))
+            ret[:, self.cls] = 1.
+            return ret
+        else:
+            return self.model.predict_proba(X)

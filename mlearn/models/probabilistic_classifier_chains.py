@@ -1,13 +1,12 @@
 """
 Contributed by Kuan-Hao Huang
 """
+import copy
 
 import numpy as np
 
-from sklearn.linear_model import LogisticRegression
-
-from .utils import seed_random_state
-from .single_clf_wrapper import SingleClassClfWrapper
+from ..utils import seed_random_state
+from .model_wrapper import ModelWrapper
 
 class ProbabilisticClassifierChains():
     """
@@ -18,9 +17,10 @@ class ProbabilisticClassifierChains():
            chains." Proceedings of the 27th international conference on machine
            learning (ICML-10). 2010.
     """
-    def __init__(self, ctype, cost, params, random_state=None):
+    def __init__(self, base_model, cost, n_samples=100, random_state=None):
         self.random_state = seed_random_state(random_state)
-        self.model = PCCModel(ctype, cost, params, self.random_state)
+        self.base_model = base_model
+        self.model = PCCModel(self.base_model, cost, n_samples, random_state)
 
     def fit(self, X, Y):
         self.model.train(X, Y)
@@ -39,27 +39,22 @@ def pairwise_rankloss(Z, Y): #truth(Z), prediction(Y)
     return (rankloss + tie0 + tie1)
 
 class PCCModel():
-    def __init__(self, ctype, cost, params, random_state=None):
-        if ctype not in ['RF', 'LogR']:
-            raise NotImplementedError('ctype {} is not implemented'.format(ctype))
+    def __init__(self, base_model, cost, n_samples, random_state=None):
         if cost not in ['f1', 'hamming', 'rankloss', 'acc']:
             raise NotImplementedError('cost {} is not implemented'.format(cost))
-        self.ctype = ctype
+        self.base_model = base_model
         self.cost = cost
-        self.n_sample = 200
-        self.params = params
+        self.n_samples = n_samples
+        self.random_state = seed_random_state(random_state)
+
         self.clfs = None
         self.K = None
-        self.random_state = seed_random_state(random_state)
 
     def init(self, data_y):
         self.K = data_y.shape[1]
 
     def new_clfs(self, K):
-        if self.ctype == 'RF':
-            return [RandomForestClassifier(**self.params) for i in range(K)]
-        elif self.ctype == 'LogR':
-            return [SingleClassClfWrapper(LogisticRegression(**self.params)) for i in range(K)]
+        return [ModelWrapper(copy.deepcopy(self.base_model)) for i in range(K)]
 
     def predict_prob(self, data_x):
         pred = np.zeros((data_x.shape[0], len(self.clfs)))
@@ -68,16 +63,16 @@ class PCCModel():
         return pred
 
     def predict_one(self, x, pb):
-        prob = np.repeat(pb, self.n_sample).reshape((pb.shape[0], self.n_sample)).T
-        y_sample = (np.random.random((self.n_sample, self.K))<prob).astype(int)
+        prob = np.repeat(pb, self.n_samples).reshape((pb.shape[0], self.n_samples)).T
+        y_sample = (np.random.random((self.n_samples, self.K))<prob).astype(int)
         if self.cost == "rankloss":
             thr = 0.0
             pred = (pb>thr).astype(int)
-            p_sample = np.repeat(pred, self.n_sample).reshape((pred.shape[0], self.n_sample)).T
+            p_sample = np.repeat(pred, self.n_samples).reshape((pred.shape[0], self.n_samples)).T
             score = pairwise_rankloss(y_sample, p_sample).mean()
             for p in pb:
                 pred = (pb>p).astype(int)
-                p_sample = np.repeat(pred, self.n_sample).reshape((pred.shape[0], self.n_sample)).T
+                p_sample = np.repeat(pred, self.n_samples).reshape((pred.shape[0], self.n_samples)).T
                 score_t = pairwise_rankloss(y_sample, p_sample).mean()
                 if score_t < score:
                     score = score_t
@@ -91,7 +86,7 @@ class PCCModel():
             s_idxs = y_sample.sum(axis=1)
             P = np.zeros((self.K, self.K))
             for i in range(self.K):
-                P[i, :] = y_sample[s_idxs==(i+1), :].sum(axis=0)*1.0/self.n_sample
+                P[i, :] = y_sample[s_idxs==(i+1), :].sum(axis=0)*1.0/self.n_samples
 
             W = 1.0 / (np.cumsum(np.ones((self.K, self.K)), axis=1) + np.cumsum(np.ones((self.K, self.K)), axis=0))
             F = P*W

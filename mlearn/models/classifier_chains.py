@@ -6,8 +6,8 @@ from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
 from six.moves import cPickle as pickle
 from sklearn.tree import DecisionTreeClassifier
 
-from .utils import DATAPATH, get_scoring_fn, load_data
-from .single_clf_wrapper import SingleClassClfWrapper
+from ..utils import get_scoring_fn
+from .model_wrapper import ModelWrapper
 
 class ClassifierChains():
     """
