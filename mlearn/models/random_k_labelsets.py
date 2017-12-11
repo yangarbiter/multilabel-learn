@@ -1,14 +1,10 @@
+import copy
 
-import utils
-import gzip
-import json, copy, random, os
 import numpy as np
-from sklearn import tree
 from joblib import Parallel, delayed
-import cPickle as pickle
 
+from ..utils import seed_random_state
 from .model_wrapper import ModelWrapper
-from .utils import seed_random_state
 
 def train_single_clf(clf, X, y):
     lbl = np.packbits(y[:, clf[1]], axis=1)
