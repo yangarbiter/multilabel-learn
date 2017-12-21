@@ -1,0 +1,6 @@
+numpy
+scipy
+joblib
+Cython
+six
+scikit-learn
