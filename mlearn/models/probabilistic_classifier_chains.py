@@ -1,4 +1,5 @@
 """
+Probabilistic Classifier Chain
 Contributed by Kuan-Hao Huang
 """
 import copy
@@ -12,7 +13,7 @@ class ProbabilisticClassifierChains():
     """
     References
     ----------
-    .. [1] Cheng, Weiwei, Eyke Hüllermeier, and Krzysztof J. Dembczynski. "Bayes
+    .. [1] Cheng, Weiwei, Eyke Hullermeier, and Krzysztof J. Dembczynski. "Bayes
            optimal multilabel classification via probabilistic classifier
            chains." Proceedings of the 27th international conference on machine
            learning (ICML-10). 2010.

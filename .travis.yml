@@ -1,0 +1,43 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+os:
+  - linux
+  - osx
+sudo: required
+dist: trusty
+matrix:
+  include:
+    - os: linux
+      python: "nightly"
+    - os: linux
+      python: "3.7-dev"
+  allow_failures:
+    - os: osx           # Python 3 not supported in Travis OSX environment
+    - os: linux
+      python: "nightly"
+    - os: linux
+      python: "3.7-dev"
+    - os: linux
+        python: "2.7"
+
+notifications:
+  email: false
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+before_install:
+  - python -V
+  - travis_retry pip install --upgrade pip wheel   # get pip >= 7, which caches built packages
+  - travis_wait 20 pip install -r requirements.txt
+  - pip install pylint
+install:
+  - ./setup.py build_ext --inplace
+script:
+  - ./setup.py test
+after_success:
+  - pylint mlearn
