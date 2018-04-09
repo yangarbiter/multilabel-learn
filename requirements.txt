@@ -4,3 +4,5 @@ joblib
 Cython
 six
 scikit-learn
+liac-arff
+pandas

@@ -6,15 +6,13 @@ class DummyClf():
     interface.
 
     """
-
     def __init__(self):
         self.classes_ = [0, 1]
 
-    def fit(self, X, y, sample_weight=None):
-        self.cls = int(y[0]) # 1 or 0
+    def fit(self, X, Y, sample_weight=None):
+        self.cls = int(Y[0]) # 1 or 0
 
-    def train(self, dataset):
-        _, y = zip(*dataset.get_labeled_entries())
+    def train(self, X, Y):
         self.cls = int(y[0])
 
     def predict(self, X):
