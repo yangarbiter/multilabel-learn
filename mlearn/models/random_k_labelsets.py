@@ -7,12 +7,17 @@ from ..utils import seed_random_state
 from .model_wrapper import ModelWrapper
 
 def train_single_clf(clf, X, y):
+    """
+    helper function to train RAKEL in parallel
+    """
     lbl = np.packbits(y[:, clf[1]], axis=1)
     clf[0].fit(X, lbl.reshape(-1))
     return
 
 class RandomKLabelsets():
     """
+    RAndom K labELsets (RAKEL)
+
     References
     ----------
     .. [1] Tsoumakas, Grigorios, and Ioannis Vlahavas. "Random k-labelsets: An
