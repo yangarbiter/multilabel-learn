@@ -9,13 +9,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
 from mlearn.utils import load_data
-from mlearn.criteria import (
-    reweighting,
-    pairwise_hamming_loss,
-    pairwise_rank_loss,
-    pairwise_f1_score,
-    pairwise_accuracy_score,
-)
 
 class ModelTestCase(unittest.TestCase):
     """
@@ -84,7 +77,7 @@ class ModelTestCase(unittest.TestCase):
                             [0, 0, 1, 0, 0, 0],
                             [0, 0, 0, 0, 0, 0],])
 
-    def test_pcc(self):
+    def test_pcc_f1(self):
         from mlearn.models import ProbabilisticClassifierChains
         model = ProbabilisticClassifierChains(
             LogisticRegression(random_state=1126), "f1", n_samples=100,
@@ -105,6 +98,28 @@ class ModelTestCase(unittest.TestCase):
                             [0, 0, 0, 1, 0, 1],
                             [0, 0, 1, 0, 0, 0],
                             [0, 0, 0, 0, 1, 0],])
+
+    def test_pcc_rank(self):
+        from mlearn.models import ProbabilisticClassifierChains
+        model = ProbabilisticClassifierChains(
+            LogisticRegression(random_state=1126), "rankloss", n_samples=100,
+            random_state=1126)
+        model.train(self.X_train, self.Y_train)
+        pred_train = model.predict(self.X_train)[:5]
+        pred_test = model.predict(self.X_test)[:5]
+
+        assert_array_equal(pred_train,
+                           [[1, 0, 0, 0, 0, 0],
+                            [1, 0, 0, 1, 1, 0],
+                            [1, 0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 1],])
+        assert_array_equal(pred_test,
+                           [[0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 1, 0, 0],
+                            [0, 0, 0, 1, 1, 1],
+                            [0, 0, 1, 0, 0, 0],
+                            [0, 0, 1, 0, 1, 0],])
 
     def test_csrpe(self):
         from mlearn.models import CSRPE

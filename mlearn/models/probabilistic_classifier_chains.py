@@ -8,6 +8,7 @@ import numpy as np
 
 from ..utils import seed_random_state
 from .model_wrapper import ModelWrapper
+from mlearn.criteria import pairwise_rank_loss
 
 class ProbabilisticClassifierChains():
     """
@@ -28,16 +29,6 @@ class ProbabilisticClassifierChains():
 
     def predict(self, X):
         return self.model.predict(X)
-
-def pairwise_rankloss(Z, Y): #truth(Z), prediction(Y)
-    """
-    Z and Y should be the same size 2-d matrix
-    """
-    rankloss = ((Z==0) & (Y==1)).sum(axis=1) * ((Z==1) & (Y==0)).sum(axis=1)
-    tie0 = 0.5 * ((Z==0) & (Y==0)).sum(axis=1) * ((Z==1) & (Y==0)).sum(axis=1)
-    tie1 = 0.5 * ((Z==0) & (Y==1)).sum(axis=1) * ((Z==1) & (Y==1)).sum(axis=1)
-    #return -(rankloss + tie0 + tie1)
-    return (rankloss + tie0 + tie1)
 
 class PCCModel():
     def __init__(self, base_model, cost, n_samples, random_state=None):
@@ -70,11 +61,11 @@ class PCCModel():
             thr = 0.0
             pred = (pb>thr).astype(int)
             p_sample = np.repeat(pred, self.n_samples).reshape((pred.shape[0], self.n_samples)).T
-            score = pairwise_rankloss(y_sample, p_sample).mean()
+            score = pairwise_rank_loss(y_sample, p_sample).mean()
             for p in pb:
                 pred = (pb>p).astype(int)
                 p_sample = np.repeat(pred, self.n_samples).reshape((pred.shape[0], self.n_samples)).T
-                score_t = pairwise_rankloss(y_sample, p_sample).mean()
+                score_t = pairwise_rank_loss(y_sample, p_sample).mean()
                 if score_t < score:
                     score = score_t
                     thr = p
