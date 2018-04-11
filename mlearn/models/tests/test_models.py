@@ -63,3 +63,68 @@ class ModelTestCase(unittest.TestCase):
                             [0, 0, 0, 1, 1, 0],
                             [0, 0, 1, 0, 0, 0],
                             [0, 0, 0, 0, 1, 0],])
+
+    def test_classifier_chains(self):
+        from mlearn.models import ClassifierChains
+        model = ClassifierChains(LogisticRegression(random_state=1126))
+        model.train(self.X_train, self.Y_train)
+        pred_train = model.predict(self.X_train)[:5]
+        pred_test = model.predict(self.X_test)[:5]
+
+        assert_array_equal(pred_train,
+                           [[1, 0, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                            [1, 0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 1],])
+        assert_array_equal(pred_test,
+                           [[0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 1, 0, 0],
+                            [0, 0, 0, 0, 0, 0],
+                            [0, 0, 1, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 0],])
+
+    def test_pcc(self):
+        from mlearn.models import ProbabilisticClassifierChains
+        model = ProbabilisticClassifierChains(
+            LogisticRegression(random_state=1126), "f1", n_samples=100,
+            random_state=1126)
+        model.train(self.X_train, self.Y_train)
+        pred_train = model.predict(self.X_train)[:5]
+        pred_test = model.predict(self.X_test)[:5]
+
+        assert_array_equal(pred_train,
+                           [[1, 0, 0, 0, 0, 0],
+                            [1, 0, 0, 0, 1, 0],
+                            [1, 0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 1],])
+        assert_array_equal(pred_test,
+                           [[0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 1, 0, 0],
+                            [0, 0, 0, 1, 0, 1],
+                            [0, 0, 1, 0, 0, 0],
+                            [0, 0, 0, 0, 1, 0],])
+
+    def test_csrpe(self):
+        from mlearn.models import CSRPE
+        from mlearn.criteria import pairwise_rank_loss
+        model = CSRPE(pairwise_rank_loss,
+                      LogisticRegression(random_state=1126), n_clfs=100, n_jobs=-1,
+                      random_state=1126)
+        model.train(self.X_train, self.Y_train)
+        pred_train = model.predict(self.X_train)[:5]
+        pred_test = model.predict(self.X_test)[:5]
+
+        assert_array_equal(pred_train,
+                           [[0, 0, 0, 0, 1, 0],
+                            [0, 0, 0, 1, 0, 0],
+                            [1, 0, 0, 0, 0, 0],
+                            [0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 0, 0, 1],])
+        assert_array_equal(pred_test,
+                           [[0, 1, 0, 0, 0, 0],
+                            [0, 0, 0, 1, 0, 0],
+                            [0, 0, 0, 1, 0, 0],
+                            [0, 0, 1, 0, 0, 0],
+                            [0, 0, 0, 0, 1, 0],])

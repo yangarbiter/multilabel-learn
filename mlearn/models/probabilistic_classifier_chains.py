@@ -19,11 +19,11 @@ class ProbabilisticClassifierChains():
            learning (ICML-10). 2010.
     """
     def __init__(self, base_model, cost, n_samples=100, random_state=None):
-        self.random_state = seed_random_state(random_state)
         self.base_model = base_model
-        self.model = PCCModel(self.base_model, cost, n_samples, random_state)
+        self.model = PCCModel(base_model=self.base_model, cost=cost,
+            n_samples=n_samples, random_state=random_state)
 
-    def fit(self, X, Y):
+    def train(self, X, Y):
         self.model.train(X, Y)
 
     def predict(self, X):
@@ -46,7 +46,7 @@ class PCCModel():
         self.base_model = base_model
         self.cost = cost
         self.n_samples = n_samples
-        self.random_state = seed_random_state(random_state)
+        self.random_state_ = seed_random_state(random_state)
 
         self.clfs = None
         self.K = None
@@ -65,7 +65,7 @@ class PCCModel():
 
     def predict_one(self, x, pb):
         prob = np.repeat(pb, self.n_samples).reshape((pb.shape[0], self.n_samples)).T
-        y_sample = (np.random.random((self.n_samples, self.K))<prob).astype(int)
+        y_sample = (self.random_state_.rand(self.n_samples, self.K)<prob).astype(int)
         if self.cost == "rankloss":
             thr = 0.0
             pred = (pb>thr).astype(int)

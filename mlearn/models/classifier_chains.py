@@ -18,7 +18,7 @@ class ClassifierChains():
     """
 
     def __init__(self, base_clf):
-        self.base_clf = SingleClassClfWrapper(copy.deepcopy(base_clf))
+        self.base_clf = ModelWrapper(copy.deepcopy(base_clf))
 
     def train(self, X, y):
         self.n_labels = np.shape(y)[1]
@@ -42,4 +42,4 @@ class ClassifierChains():
             temp_X = np.hstack((X, pred[:, :i]))
             pred[:, i] = self.clfs[i].predict(temp_X)
 
-        return pred
+        return pred.astype(int)
