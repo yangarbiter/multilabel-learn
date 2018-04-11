@@ -41,7 +41,7 @@ class RandomKLabelsets():
                 clf = copy.deepcopy(self.base_clf)
                 labelset = self.random_state_.choice(
                         range(self.n_labels), self.K, replace=False)
-                self.clfs.append((SingleClassClfWrapper(clf), labelset))
+                self.clfs.append((ModelWrapper(clf), labelset))
 
         Parallel(n_jobs=self.n_jobs, backend='threading')(
                 delayed(train_single_clf)(self.clfs[i], X, y)
@@ -55,4 +55,4 @@ class RandomKLabelsets():
             res = np.unpackbits(
                     clf.predict(X).reshape((X.shape[0], 1)).astype(np.uint8), axis=1).astype(int)
             votes[:, lbl] += (res[:, :len(lbl)] * 2 - 1)
-        return votes >= 0
+        return (votes >= 0).astype(int)
