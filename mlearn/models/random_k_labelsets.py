@@ -1,3 +1,5 @@
+"""RAndom K labELsets (RAKEL) module
+"""
 import copy
 
 import numpy as np
@@ -31,7 +33,7 @@ class RandomKLabelsets():
     n_jobs:  int, optional (default=1)
         The number of jobs to run in parallel for both fit and predict. If
         -1, then the number of jobs is set to the number of cores.
-        
+
     random_state : {int, np.random.RandomState instance, None}, optional (default=None)
         If int or None, random_state is passed as parameter to generate
         np.random.RandomState instance. if np.random.RandomState instance,
