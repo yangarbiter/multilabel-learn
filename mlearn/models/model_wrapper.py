@@ -13,7 +13,7 @@ class DummyClf():
         self.cls = int(Y[0]) # 1 or 0
 
     def train(self, X, Y):
-        self.cls = int(y[0])
+        self.cls = int(Y[0])
 
     def predict(self, X):
         return self.cls * np.ones(len(X))
