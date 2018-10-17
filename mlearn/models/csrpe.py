@@ -38,7 +38,6 @@ class CSRPE():
         return encoded
 
     def train(self, X, y):
-
         if self.n_labels is None:
             self.n_labels = np.shape(y)[1]
             self.clfs = [CLF(self.base_clf, self.scoring_fn,

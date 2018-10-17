@@ -8,6 +8,7 @@ import numpy as np
 
 from ..utils import seed_random_state
 from .model_wrapper import ModelWrapper
+from mlearn.criteria import pairwise_rank_loss
 
 class ProbabilisticClassifierChains():
     """
@@ -19,25 +20,15 @@ class ProbabilisticClassifierChains():
            learning (ICML-10). 2010.
     """
     def __init__(self, base_model, cost, n_samples=100, random_state=None):
-        self.random_state = seed_random_state(random_state)
         self.base_model = base_model
-        self.model = PCCModel(self.base_model, cost, n_samples, random_state)
+        self.model = PCCModel(base_model=self.base_model, cost=cost,
+            n_samples=n_samples, random_state=random_state)
 
-    def fit(self, X, Y):
+    def train(self, X, Y):
         self.model.train(X, Y)
 
     def predict(self, X):
         return self.model.predict(X)
-
-def pairwise_rankloss(Z, Y): #truth(Z), prediction(Y)
-    """
-    Z and Y should be the same size 2-d matrix
-    """
-    rankloss = ((Z==0) & (Y==1)).sum(axis=1) * ((Z==1) & (Y==0)).sum(axis=1)
-    tie0 = 0.5 * ((Z==0) & (Y==0)).sum(axis=1) * ((Z==1) & (Y==0)).sum(axis=1)
-    tie1 = 0.5 * ((Z==0) & (Y==1)).sum(axis=1) * ((Z==1) & (Y==1)).sum(axis=1)
-    #return -(rankloss + tie0 + tie1)
-    return (rankloss + tie0 + tie1)
 
 class PCCModel():
     def __init__(self, base_model, cost, n_samples, random_state=None):
@@ -46,7 +37,7 @@ class PCCModel():
         self.base_model = base_model
         self.cost = cost
         self.n_samples = n_samples
-        self.random_state = seed_random_state(random_state)
+        self.random_state_ = seed_random_state(random_state)
 
         self.clfs = None
         self.K = None
@@ -65,16 +56,16 @@ class PCCModel():
 
     def predict_one(self, x, pb):
         prob = np.repeat(pb, self.n_samples).reshape((pb.shape[0], self.n_samples)).T
-        y_sample = (np.random.random((self.n_samples, self.K))<prob).astype(int)
+        y_sample = (self.random_state_.rand(self.n_samples, self.K)<prob).astype(int)
         if self.cost == "rankloss":
             thr = 0.0
             pred = (pb>thr).astype(int)
             p_sample = np.repeat(pred, self.n_samples).reshape((pred.shape[0], self.n_samples)).T
-            score = pairwise_rankloss(y_sample, p_sample).mean()
+            score = pairwise_rank_loss(y_sample, p_sample).mean()
             for p in pb:
                 pred = (pb>p).astype(int)
                 p_sample = np.repeat(pred, self.n_samples).reshape((pred.shape[0], self.n_samples)).T
-                score_t = pairwise_rankloss(y_sample, p_sample).mean()
+                score_t = pairwise_rank_loss(y_sample, p_sample).mean()
                 if score_t < score:
                     score = score_t
                     thr = p
