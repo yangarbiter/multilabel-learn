@@ -6,3 +6,7 @@ six
 scikit-learn
 liac-arff
 pandas
+tensorflow
+keras
+bistiming
+progressbar33

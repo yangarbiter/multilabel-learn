@@ -2,41 +2,28 @@ from os.path import join
 import threading
 import itertools
 
-from mkdir_p import mkdir_p
 import numpy as np
 from keras.layers import (
     Input,
-    Merge,
     Dense,
-    Dropout,
-    LSTM,
-    GRU,
-    SimpleRNN,
-    Activation,
     RepeatVector,
 )
 from keras.regularizers import l2, l1
 from keras.models import Model
-from keras.optimizers import Nadam, Adam
-import keras.optimizers.Optimizer
+from keras.optimizers import Nadam, Adam, Optimizer
 from keras import backend as K
 import scipy.sparse as ss
-
-import tensorflow as tf
-
-from sklearn.model_selection import train_test_split
 from bistiming import IterTimer, SimpleTimer
 
 from .utils import get_random_state, weighted_binary_crossentropy, \
     get_rnn_unit, w_bin_xentropy
-from ..calc_score import (
-    reweight_pairwise_f1,
-    reweight_pairwise_hamming,
-    p_reweight_pairwise_f1,
-    sparse_reweight_pairwise_f1,
-    sparse_reweight_pairwise_rankloss,
-    sparse_reweight_pairwise_acc,
-    reweight_pairwise_rankloss,
+from mlearn.criteria import (
+    reweight_pairwise_f1_score,
+    reweight_pairwise_rank_loss,
+    reweight_pairwise_accuracy_score,
+    sparse_reweight_pairwise_f1_score,
+    sparse_reweight_pairwise_rank_loss,
+    sparse_reweight_pairwise_accuracy_score,
 )
 
 
@@ -57,14 +44,43 @@ def arch_001(input_shape, n_labels, weight_input_shape, l2w=1e-5, rnn_unit='lstm
 
     weight_input = Input(shape=weight_input_shape)
 
-    return Model(input=[inputs, weight_input], output=[outputs]), weight_input
+    return Model(inputs=[inputs, weight_input], outputs=[outputs]), weight_input
 
 
 class RethinkNet(object):
+    """
+    RethinkNet model
+
+    Parameters
+    ----------
+    n_features: int
+    n_labels: int
+    scoring_fn:
+    reweight: ['balanced', 'None', 'hw', 'vw']
+        'hw': horizontal reweighting
+        'vw': vertical reweighting
+        'balanced': 
+        'None': 
+    b: int, optional, default=3
+        number of rethinking iteration to perform
+    nb_epochs: int
+        number of epochs to train
+    batch_size: int, optional, default=256
+
+    Attributes
+    ----------
+    model : keras.models.Model instance
+
+    References
+    ----------
+    Yao-Yuan Yang, Yi-An Lin, Hong-Min Chu, Hsuan-Tien Lin. "Deep Learning
+    with a Rethinking Structure for Multi-label Classification."
+    https://arxiv.org/abs/1802.01697, (2018).
+    """
 
     def __init__(self, n_features:int, n_labels:int, scoring_fn,
             architecture:str="arch_001", b:int=3, batch_size:int=256,
-            nb_epoches:int=100, reweight='None', optimizer=None,
+            nb_epochs:int=100, reweight:str='None', optimizer=None,
             random_state=None, predict_period=10):
         self.random_state = get_random_state(random_state)
         self.batch_size = batch_size
@@ -75,18 +91,18 @@ class RethinkNet(object):
         if reweight in ['balanced', 'None']:
             self.reweight_scoring_fn = None
         elif reweight in ['hw', 'vw']:
-            if 'pairwise_hamming' in self.scoring_fn.__str__():
-                self.reweight_scoring_fn = reweight_pairwise_hamming
-            elif 'pairwise_rankloss' in self.scoring_fn.__str__():
-                self.reweight_scoring_fn = sparse_reweight_pairwise_rankloss
-            elif 'pairwise_acc' in self.scoring_fn.__str__():
-                self.reweight_scoring_fn = sparse_reweight_pairwise_acc
-            elif 'pairwise_f1' in self.scoring_fn.__str__():
-                self.reweight_scoring_fn = sparse_reweight_pairwise_f1
+            #if 'pairwise_hamming' in self.scoring_fn.__str__():
+            #    self.reweight_scoring_fn = reweight_pairwise_hamming
+            if 'pairwise_rank_loss' in self.scoring_fn.__str__():
+                self.reweight_scoring_fn = sparse_reweight_pairwise_rank_loss
+            elif 'pairwise_accuracy_score' in self.scoring_fn.__str__():
+                self.reweight_scoring_fn = sparse_reweight_pairwise_accuracy_score
+            elif 'pairwise_f1_score' in self.scoring_fn.__str__():
+                self.reweight_scoring_fn = sparse_reweight_pairwise_f1_score
             else:
                 raise ValueError(self.scoring_fn, "not supported")
 
-        self.nb_epoches = nb_epoches
+        self.nb_epochs = nb_epochs
         self.reweight = reweight
 
         self.n_labels = n_labels
@@ -96,12 +112,12 @@ class RethinkNet(object):
         model, weight_input = \
                 globals()[architecture](self.input_shape, self.n_labels,
                         self.weight_input_shape)
-        model.summary()
+        #model.summary()
         self.nb_params = int(model.count_params())
 
         if optimizer is None:
             optimizer = Nadam()
-        if not isinstance(optimizer, keras.optimizers.Optimizer):
+        if not isinstance(optimizer, Optimizer):
             raise ValueError("optimizer should be keras.optimizers.Optimizer."
                              "got :", optimizer)
 
@@ -133,9 +149,9 @@ class RethinkNet(object):
             elif self.reweight == 'None':
                 pass
             elif self.reweight_scoring_fn in [
-                    sparse_reweight_pairwise_acc,
-                    sparse_reweight_pairwise_f1,
-                    sparse_reweight_pairwise_rankloss]:
+                    sparse_reweight_pairwise_accuracy_score,
+                    sparse_reweight_pairwise_f1_score,
+                    sparse_reweight_pairwise_rank_loss]:
                 trn_pre = trn_pred[i-1]
                 if 'vw' in self.reweight:
                     trn_pre = trn_pred[i]
@@ -159,40 +175,41 @@ class RethinkNet(object):
 
     def train(self, X, Y, callbacks=[]):
         self.history = []
-        nb_epoches = self.nb_epoches
+        nb_epochs = self.nb_epochs
         X = ss.csr_matrix(X).astype('float32')
         Y = ss.csr_matrix(Y).astype(np.int8)
 
         if self.reweight == 'balanced':
-            self.ones_weight = trnY.astype(np.int32).sum() / \
-                               trnY.shape[0] / trnY.shape[1]
+            self.ones_weight = Y.astype(np.int32).sum() / \
+                               Y.shape[0] / Y.shape[1]
 
         trn_pred = []
         for i in range(self.b):
             trn_pred.append(
-                ss.csr_matrix((trnX.shape[0], self.n_labels), dtype=np.int8))
+                ss.csr_matrix((X.shape[0], self.n_labels), dtype=np.int8))
 
         predict_period = self.predict_period
-        for epoch_i in range(0, nb_epoches, predict_period):
+        for epoch_i in range(0, nb_epochs, predict_period):
             input_generator = InputGenerator(
-                self, trnX, trnY, trn_pred, shuffle=False,
+                self, X, Y, trn_pred, shuffle=False,
                 batch_size=self.batch_size, random_state=self.random_state)
             #input_generator.next()
             history = self.model.fit_generator(
                 input_generator,
-                steps_per_epoch=((trnX.shape[0] - 1) // self.batch_size) + 1,
+                steps_per_epoch=((X.shape[0] - 1) // self.batch_size) + 1,
                 epochs=epoch_i + predict_period,
-                max_q_size=32,
+                max_queue_size=32,
                 workers=8,
-                pickle_safe=True,
+                use_multiprocessing=True,
                 initial_epoch=epoch_i,
+                verbose=0,
                 callbacks=callbacks)
 
             trn_scores = []
 
-            trn_pred = self.predict_chain(trnX)
+            trn_pred = self.predict_chain(X)
             for j in range(self.b):
-                trn_scores.append(np.mean(self.scoring_fn(trnY, trn_pred[j])))
+                trn_scores.append(np.mean(self.scoring_fn(Y, trn_pred[j])))
             print("[epoch %6d] trn:" % (epoch_i + predict_period), trn_scores)
 
             self.history.append({
@@ -228,9 +245,7 @@ class RethinkNet(object):
         X = ss.csr_matrix(X)
         pred_chain = self.predict_chain(X)
 
-        if method == 'last':
-            pred = pred_chain[-1]
-
+        pred = pred_chain[-1]
         return pred
 
     def predict_topk(self, X, k=5):
@@ -299,10 +314,9 @@ class InputGenerator(object):
             pred = [self.pred[j][index_array] for j in range(self.model.b)]
 
             if self.model.reweight_scoring_fn in [
-                    #reweight_pairwise_hamming,
-                    sparse_reweight_pairwise_acc,
-                    sparse_reweight_pairwise_f1,
-                    sparse_reweight_pairwise_rankloss]:
+                    sparse_reweight_pairwise_accuracy_score,
+                    sparse_reweight_pairwise_f1_score,
+                    sparse_reweight_pairwise_rank_loss]:
                 lbl_weight = self.model._prep_weight(pred, batch_Y)
             else:
                 lbl_weight = self.model._prep_weight(pred, preped_Y[:, 0, :])

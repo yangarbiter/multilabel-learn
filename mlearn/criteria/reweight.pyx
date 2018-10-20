@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 import cython
 import numpy as np
 

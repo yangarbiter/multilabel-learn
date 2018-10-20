@@ -1,4 +1,22 @@
 import numpy as np
+from .reweight import (
+    reweight_pairwise_hamming_loss,
+    reweight_pairwise_accuracy_score,
+    reweight_pairwise_f1_score,
+    reweight_pairwise_rank_loss,
+)
+from .sparse_criteria import (
+    sparse_pairwise_hamming_loss,
+    sparse_pairwise_accuracy_score,
+    sparse_pairwise_f1_score,
+    sparse_pairwise_rank_loss,
+)
+from .sparse_reweight import (
+    sparse_reweight_pairwise_hamming_loss,
+    sparse_reweight_pairwise_accuracy_score,
+    sparse_reweight_pairwise_f1_score,
+    sparse_reweight_pairwise_rank_loss,
+)
 
 def reweighting(criterion, truth, predict, use_truth=False):
     """
