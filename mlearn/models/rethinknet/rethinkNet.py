@@ -13,7 +13,7 @@ from keras.models import Model
 from keras.optimizers import Nadam, Adam, Optimizer
 from keras import backend as K
 import scipy.sparse as ss
-from bistiming import IterTimer, SimpleTimer
+from tqdm import tqdm
 
 from .utils import get_random_state, weighted_binary_crossentropy, \
     get_rnn_unit, w_bin_xentropy
@@ -223,19 +223,18 @@ class RethinkNet(object):
                         + ((X.shape[0] % self.batch_size) > 0))
         _ = np.ones((self.batch_size, self.b, self.n_labels))
 
-        with IterTimer("Predicting training data", total=len(batches)) as timer:
-            for bs in batches:
-                timer.update(bs)
-                if (bs+1) * self.batch_size > X.shape[0]:
-                    batch_idx = np.arange(X.shape[0])[bs * self.batch_size: X.shape[0]]
-                else:
-                    batch_idx = np.arange(X.shape[0])[bs * self.batch_size: (bs+1) * self.batch_size]
+        for bs in tqdm(batches, desc="Predicting"):
+            if (bs+1) * self.batch_size > X.shape[0]:
+                batch_idx = np.arange(X.shape[0])[bs * self.batch_size: X.shape[0]]
+            else:
+                batch_idx = np.arange(X.shape[0])[bs * self.batch_size: (bs+1) * self.batch_size]
 
-                pred_chain = self.model.predict([self._prep_X(X[batch_idx]), _])
-                pred_chain = pred_chain > 0.5
+            pred_chain = self.model.predict([self._prep_X(X[batch_idx]), _])
+            pred_chain = pred_chain > 0.5
 
-                for i in range(self.b):
-                    ret[i].append(ss.csr_matrix(pred_chain[:, i, :], dtype=np.int8))
+            for i in range(self.b):
+                ret[i].append(ss.csr_matrix(pred_chain[:, i, :], dtype=np.int8))
+
         for i in range(self.b):
             ret[i] = ss.vstack(ret[i])
         return ret

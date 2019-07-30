@@ -13,7 +13,6 @@ from keras.callbacks import  Callback
 from keras import backend as K
 
 import tensorflow as tf
-from tensorflow.contrib.tensorboard.plugins import projector
 
 _EPSILON = 10e-8
 

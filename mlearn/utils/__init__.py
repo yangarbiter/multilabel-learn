@@ -6,9 +6,7 @@ import gzip
 import pickle
 import itertools as itt
 import os
-import errno
 import arff    # liac-arff
-import random
 import xml.etree.ElementTree as ET
 import pandas as pd
 
@@ -21,14 +19,14 @@ def load_data(dataset_path):
 def load_arff(arff_filename, xml_filename):
     # read arff file
     with open(arff_filename, "r") as fp:
-        data = arff.load(fp);
+        data = arff.load(fp)
 
     # read xml file
-    tree = ET.parse(xml_filename);
+    tree = ET.parse(xml_filename)
     root = tree.getroot()
-    label_list = [];
+    label_list = []
     for child in root:
-        label_list.append(child.attrib["name"]);
+        label_list.append(child.attrib["name"])
     column_list = [attr[0] for attr in data["attributes"]]
     feature_list = list(set(column_list) - set(label_list))
 
@@ -49,17 +47,17 @@ def load_arff(arff_filename, xml_filename):
     # ipdb.set_trace()
     df = pd.DataFrame(data['data'], columns=column_list)
     df.replace(converters, inplace=True)
-    # print "Read as sparse format";
-    # n_instance = len(data["data"]);
+    # print "Read as sparse format"
+    # n_instance = len(data["data"])
     # dense_data = np.zeros( (n_instance, len(feature)+len(label)), dtype=float)
     # for i,instance in enumerate(data["data"]):
     #     for sf in instance:
-    #         idx, val = sf.split(' ');
-    #         dense_data[i][int(idx)] = val;
-    # data = dense_data;
+    #         idx, val = sf.split(' ')
+    #         dense_data[i][int(idx)] = val
+    # data = dense_data
 
-    X = df[feature_list].values;
-    Y = df[label_list].values;
+    X = df[feature_list].values
+    Y = df[label_list].values
     if Y.dtype != np.int:
         raise ValueError("Y is not int.")
 

@@ -10,3 +10,4 @@ tensorflow
 keras
 bistiming
 progressbar33
+tqdm
