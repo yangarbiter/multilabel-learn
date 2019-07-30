@@ -8,6 +8,5 @@ liac-arff
 pandas
 tensorflow
 keras
-bistiming
 progressbar33
 tqdm

@@ -10,13 +10,15 @@ import arff    # liac-arff
 import xml.etree.ElementTree as ET
 import pandas as pd
 
-def load_data(dataset_path):
+def load_data(dataset_path: str):
+    """Dataset loading function for dataset downloaded from mulan.
+    """
     arff_filename = dataset_path + ".arff"
     xml_filename = dataset_path + ".xml"
     X, Y = load_arff(arff_filename, xml_filename)
     return X, Y
 
-def load_arff(arff_filename, xml_filename):
+def load_arff(arff_filename: str, xml_filename: str):
     # read arff file
     with open(arff_filename, "r") as fp:
         data = arff.load(fp)

@@ -81,7 +81,7 @@ class RethinkNet(object):
     def __init__(self, n_features:int, n_labels:int, scoring_fn,
             architecture:str="arch_001", b:int=3, batch_size:int=256,
             nb_epochs:int=100, reweight:str='None', optimizer=None,
-            random_state=None, predict_period=10):
+            random_state=None, predict_period:int=10):
         self.random_state = get_random_state(random_state)
         self.batch_size = batch_size
         self.b = b
@@ -112,7 +112,6 @@ class RethinkNet(object):
         model, weight_input = \
                 globals()[architecture](self.input_shape, self.n_labels,
                         self.weight_input_shape)
-        #model.summary()
         self.nb_params = int(model.count_params())
 
         if optimizer is None:
@@ -184,7 +183,7 @@ class RethinkNet(object):
                                Y.shape[0] / Y.shape[1]
 
         trn_pred = []
-        for i in range(self.b):
+        for _ in range(self.b):
             trn_pred.append(
                 ss.csr_matrix((X.shape[0], self.n_labels), dtype=np.int8))
 
@@ -194,7 +193,7 @@ class RethinkNet(object):
                 self, X, Y, trn_pred, shuffle=False,
                 batch_size=self.batch_size, random_state=self.random_state)
             #input_generator.next()
-            history = self.model.fit_generator(
+            _ = self.model.fit_generator(
                 input_generator,
                 steps_per_epoch=((X.shape[0] - 1) // self.batch_size) + 1,
                 epochs=epoch_i + predict_period,
