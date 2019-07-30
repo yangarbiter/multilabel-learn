@@ -26,14 +26,9 @@ extensions = cythonize([
     ),
 ])
 
-install_requires = [
-    'numpy',
-    'scipy',
-    'scikit-learn',
-    'Cython',
-    'joblib',
-    'six',
-]
+with open('./requirements.txt') as f:
+    requirements = f.read().splitlines()
+install_requires = requirements
 
 setup(
     name = 'multilabel-learn',
