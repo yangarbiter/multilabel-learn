@@ -19,6 +19,13 @@
 ## Installation
 
 Compile and install the C-extensions
-```Python
+```bash
 python ./setup.py install
+```
+
+Run example locally
+```bash
+pip install numpy Cython
+python ./setup.py build_ext -i
+PYTHONPATH=. python ./examples/classification.py
 ```
