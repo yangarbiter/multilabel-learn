@@ -15,3 +15,10 @@
 * [Binary Relevance](mlearn/models/rethinknet/binary_relevance.py): mlearn.models.BinaryRelevance
 * [Classifier Chains](mlearn/models/rethinknet/classifier_chains.py): mlearn.models.ClassifierChains
 * [RAndom K labELsets](mlearn/models/rethinknet/random_k_labelsets.py): mlearn.models.RandomKLabelsets
+
+## Installation
+
+Compile and install the C-extensions
+```Python
+python ./setup.py install
+```
