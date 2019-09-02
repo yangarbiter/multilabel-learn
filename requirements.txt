@@ -1,12 +1,11 @@
-numpy
-scipy
+numpy>=1.17
+scipy>=1.3
 joblib
-Cython
+Cython>=0.29
 six
 scikit-learn
 liac-arff
 pandas
-tensorflow
-keras
-progressbar33
+tensorflow<2.0
+keras>2.0
 tqdm
