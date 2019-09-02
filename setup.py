@@ -41,10 +41,14 @@ setup(
     packages=[
         'mlearn',
         'mlearn.criteria',
+        'mlearn.models',
+        'mlearn.utils',
     ],
     package_dir={
         'mlearn': 'mlearn',
-        'mlearn.criteria': 'mlearn/criteria/',
+        'mlearn.criteria': 'mlearn/criteria',
+        'mlearn.models': 'mlearn/models',
+        'mlearn.utils': 'mlearn/utils',
     },
     ext_modules = extensions,
 )
