@@ -29,3 +29,27 @@ pip install numpy Cython
 python ./setup.py build_ext -i
 PYTHONPATH=. python ./examples/classification.py
 ```
+
+## Citations
+
+For RethinkNet, please cite
+```bib
+@article{yang2018deep,
+  title={Deep learning with a rethinking structure for multi-label classification},
+  author={Yang, Yao-Yuan and Lin, Yi-An and Chu, Hong-Min and Lin, Hsuan-Tien},
+  journal={arXiv preprint arXiv:1802.01697},
+  year={2018}
+}
+```
+
+For Cost-Sensitive Reference Pair Encoding (CSRPE), please cite
+```bib
+@inproceedings{YY2018csrpe,
+  title = {Cost-Sensitive Reference Pair Encoding for Multi-Label Learning},
+  author = {Yao-Yuan Yang and Kuan-Hao Huang and Chih-Wei Chang and Hsuan-Tien Lin},
+  booktitle = {Proceedings of the Pacific-Asia Conference on Knowledge Discovery and Data Mining (PAKDD)},
+  year = 2018,
+  arxiv = {https://arxiv.org/abs/1611.09461},
+  software = {https://github.com/yangarbiter/multilabel-learn/blob/master/mlearn/models/csrpe.py},
+}
+```
