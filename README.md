@@ -32,6 +32,8 @@ PYTHONPATH=. python ./examples/classification.py
 
 ## Citations
 
+If you use some of my works in a scientific publication, we would appreciate citations to the following papers:
+
 For RethinkNet, please cite
 ```bib
 @article{yang2018deep,
